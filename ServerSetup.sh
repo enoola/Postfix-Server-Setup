@@ -5,6 +5,8 @@ if [[ $EUID -ne 0 ]]; then
 	exit 1
 fi
 
+nl="\r\n"
+
 ### Functions ###
 
 debian_initialize() {
@@ -167,9 +169,47 @@ add_firewall_port(){
 
 
 install_ssl_Cert() {
-	git clone https://github.com/certbot/certbot.git /opt/letsencrypt > /dev/null 2>&1
+	#git clone https://github.com/certbot/certbot.git /opt/letsencrypt > /dev/null 2>&1
+	#we'll need to take email at some point
+	read -p "Enter the email address that will be used in from of the authority " -r emailforacme
+	echo "---> : $emailforacme"
+	if [ "$emailforacme" == '' ]
+	then
+		echo "ERROR: email you entered is empty, will stop."
+		exit
+	else
+		echo "email is $emailforacme ."
+	fi
+	echo 'install of acme commented'
+	##curloutput=$(curl --insecure https://get.acme.sh | sh -s email="${emailforacme}")
+	##echo "ret curl: $curloutput"
+	echo "Choose your CA (todo)"
+	#other user specifies the file containing dnsapitouse
+	set -x
+	echo "Choose your DNSRegistrar 0) Others, 1) dns_gandi_livedns, 2) dns_internetbs"
+	arRegistrars=("userchoose","dns_gandi_livedns","dns_internetbs")
+	read -p "Choose (0,1,2) :" -r chosenRegistrar
 
-	cd /opt/letsencrypt
+	chosenHook=${arRegistrars[${chosenRegistrar}]}
+	echo "1. Hook chosen: $chosenHook"
+	if [ $chosenRegistrar == 0 ]
+	then
+		echo "you chose hook ${chosenHook}."
+		read -p "Please enter the hook expected by acme.sh" -r chosenHook
+	fi
+	set +x
+	echo "2. Hook chosen: $chosenHook"
+
+	#for i in ${arRegistrers[@]};
+	#	do echo ${i};
+	#	if [ "{$i}" == 1 ]
+	#done
+exit;
+	#./acme.sh --issue --dns dns_internetbs
+	#install socat ?!
+	## I assume the script is run as root
+	##cd /opt/letsencrypt
+	#cd /root/.acme.sh/acme.sh -
 	letsencryptdomains=()
 	end="false"
 	i=0
@@ -185,7 +225,7 @@ install_ssl_Cert() {
 		fi
 		((i++))
 	done
-	command="./certbot-auto certonly --standalone "
+	command="~/.acme.sh/acme.sh --issue --dns $dnsregistrar_touse certonly --standalone "
 	for i in "${letsencryptdomains[@]}";
 		do
 			command="$command -d $i"
